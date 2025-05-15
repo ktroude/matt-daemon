@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <algorithm>
 
-
 /**
  * @brief Constructs the server, creates a TCP socket bound to the given port and starts listening.
  * 
@@ -31,7 +30,7 @@ Server::Server(int port, TintinReporter &logger) : logger(logger), activeClients
         throw std::runtime_error("Server: listen failed, maximum socket reached");
     }
 
-    this->logger.log("INFO", "Matt_daemon: Server created.");
+    this->logger.log("INFO", "Server created.");
 }
 
 /**
@@ -50,7 +49,7 @@ Server::~Server() {
         }
     }
 
-    logger.log("INFO", "Matt_daemon: Server destroyed.");
+    logger.log("INFO", "Server destroyed.");
 }
 
 /**
@@ -108,11 +107,11 @@ void Server::handleClient(int clientSocket, TintinReporter &logger, Server *srv)
         ssize_t received = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
 
         if (received == 0) {
-            logger.log("INFO", "Matt_daemon: Client disconnected.");
+            logger.log("INFO", "Client disconnected.");
             break;
         }
         if (received < 0) {
-            logger.log("ERROR", "Matt_daemon: recv error.");
+            logger.log("ERROR", "recv error.");
             break;
         }
 
@@ -123,7 +122,7 @@ void Server::handleClient(int clientSocket, TintinReporter &logger, Server *srv)
         input.erase(std::remove(input.begin(), input.end(), '\r'), input.end());
 
         if (input == "quit") {
-            logger.log("INFO", "Matt_daemon: Request quit.");
+            logger.log("INFO", "Request quit.");
             srv->stop();
             break;
         } else {
@@ -133,5 +132,5 @@ void Server::handleClient(int clientSocket, TintinReporter &logger, Server *srv)
 
     close(clientSocket);
     --srv->activeClients;
-    logger.log("INFO", "Matt_daemon: Client handler thread exited.");
+    logger.log("INFO", "Client handler thread exited.");
 }

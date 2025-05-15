@@ -8,7 +8,7 @@
 class TintinReporter {
 
     public:
-        TintinReporter(const std::string& logPath = "./logs/matt_daemon.log");
+        TintinReporter(const std::string& logPath);
         ~TintinReporter();
 
         void log(const std::string& level, const std::string& message);

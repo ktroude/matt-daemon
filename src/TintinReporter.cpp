@@ -47,11 +47,11 @@ void TintinReporter::log(const std::string &level, const std::string &message) {
 
     std::string log = getTimestamp();
     if (level == "INFO") {
-        log += " [INFO] - " + message;
+        log += " [INFO] - Matt_daemon: " + message;
     } else if (level == "ERROR") {
-        log += " [ERROR] - " + message;
+        log += " [ERROR] - Matt_daemon: " + message;
     } else {
-        log += " [LOG] - " + message;
+        log += " [LOG] - Matt_daemon: " + message;
     }
 
     logFile << log << std::endl;

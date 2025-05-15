@@ -16,7 +16,9 @@ private:
     bool createLockFile();
     void removeLockFile();
     void setupSignalHandlers();
+    static void handleSignal(int signal);
 
+    static Daemon* instance;
     TintinReporter logger;
     Server* server;
     int lockFd;
