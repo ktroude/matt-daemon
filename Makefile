@@ -1,4 +1,4 @@
-NAME = Matt_daemon
+NAME = MattDaemon
 
 SRC_DIR = src
 OBJ_DIR = obj

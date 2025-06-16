@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <cstring>
 #include <cerrno> 
+#include <iostream>
 
 
 Daemon* Daemon::instance = nullptr;
@@ -42,28 +43,30 @@ Daemon::~Daemon() {}
 int Daemon::run()
 {
     uid_t id = geteuid();
-
     if (id != 0) {
+        logger.log("ERROR", "root privilege needed.");
         throw std::runtime_error("Daemon: root privilege needed");
     }
 
     bool isCreated = createLockFile();
 
     if (!isCreated) {
+        logger.log("ERROR", "lock file error.");
         throw std::runtime_error("Daemon: lock file error");
     }
 
     daemonize();
 
-    mkdir("/var/log/matt_daemon/", 0700);
     server = new Server(4242, logger);
 
     setupSignalHandlers();
     logger.log("INFO", "Entering Daemon mode.");
+
     server->start();
 
     removeLockFile();
-    delete server;
+    delete instance->server;
+    instance->server = nullptr;
     return 0;
 }
 
@@ -80,6 +83,7 @@ void Daemon::daemonize() {
     pid_t pid = fork();
 
     if (pid < 0) {
+        logger.log("ERROR", "fork error.");
         throw std::runtime_error("Daemon: fork error");
     }
     if (pid > 0) {
@@ -87,6 +91,7 @@ void Daemon::daemonize() {
     }
 
     if (setsid() < 0) {
+        logger.log("ERROR", "setsid error.");
         throw std::runtime_error("Daemon: setsid error");
     }
 
@@ -170,9 +175,5 @@ void Daemon::handleSignal(int signal) {
     if (instance) {
         instance->logger.log("INFO", "Signal received: " + std::to_string(signal));
         instance->server->stop();
-        instance->removeLockFile();
-        delete instance->server;
-        instance->server = nullptr;
-        exit(0);
     }
 }

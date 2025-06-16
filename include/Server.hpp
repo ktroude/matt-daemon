@@ -9,25 +9,23 @@
 #include "TintinReporter.hpp"
 
 class Server {
-
     public:
-        Server(int port, TintinReporter& logger);
+        Server(int port, TintinReporter &logger);
         ~Server();
-
+    
         void start();
         void stop();
-
+        void handleClient(int clientSocket);
+    
     private:
         int serverSocket;
         struct sockaddr_in serverAddr;
+        TintinReporter &logger;
         std::vector<std::thread> clientThreads;
         std::mutex clientMutex;
+        std::atomic<bool> running;
         std::atomic<int> activeClients;
-        bool running;
-
-        TintinReporter& logger;
-
-        static void handleClient(int clientSocket, TintinReporter& logger, Server* srv);
-};
+    };
+    
 
 #endif
