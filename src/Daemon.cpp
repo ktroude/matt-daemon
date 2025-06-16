@@ -5,6 +5,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <cstring>
+#include <cerrno> 
+
+
+Daemon* Daemon::instance = nullptr;
 
 /**
  * @brief Constructs the daemon and initializes its members.
@@ -13,6 +18,7 @@
  * and registers this instance as the global signal handler context.
  */
 Daemon::Daemon() : logger("/var/log/matt_daemon/matt_daemon.log"), server(nullptr), lockFd(-1), running(true) {
+
     instance = this;
 }
 
@@ -122,13 +128,17 @@ bool Daemon::createLockFile() {
  * This function is called during shutdown and in the signal handler
  * to ensure proper cleanup.
  */
-void Daemon::removeLockFile() {
+ void Daemon::removeLockFile() {
     if (lockFd >= 0) {
         close(lockFd);
+        lockFd = -1;
     }
-    
-    unlink("/var/lock/matt_daemon.lock");
 
+    if (unlink("/var/lock/matt_daemon.lock") != 0) {
+        logger.log("ERROR", "Failed to remove lock file: " + std::string(strerror(errno)));
+    } else {
+        logger.log("INFO", "Lock file removed.");
+    }
 }
 
 /**
@@ -163,5 +173,6 @@ void Daemon::handleSignal(int signal) {
         instance->removeLockFile();
         delete instance->server;
         instance->server = nullptr;
+        exit(0);
     }
 }

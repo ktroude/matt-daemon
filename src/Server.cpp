@@ -10,7 +10,7 @@
  * @param logger Reference to the TintinReporter for logging server events.
  * @throws std::runtime_error If socket creation, bind or listen fails.
  */
-Server::Server(int port, TintinReporter &logger) : logger(logger), activeClients(0), running(true) 
+Server::Server(int port, TintinReporter &logger) : activeClients(0), running(true), logger(logger)  
 {
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
@@ -68,6 +68,7 @@ void Server::start()
             if (activeClients < 3) {
                 std::lock_guard<std::mutex> lock(clientMutex);
                 clientThreads.emplace_back(&Server::handleClient, clientSocket, std::ref(logger), this);
+                logger.log("INFO", "Client " + std::to_string(clientSocket) + " connected");
                 activeClients++;                
             } else {
                 logger.log("ERROR", "Maximum socket reached");
