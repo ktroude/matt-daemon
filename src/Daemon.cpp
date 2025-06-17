@@ -2,13 +2,13 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <cstring>
 #include <cerrno> 
 #include <iostream>
-
 
 Daemon* Daemon::instance = nullptr;
 
@@ -49,7 +49,6 @@ int Daemon::run()
     }
 
     bool isCreated = createLockFile();
-
     if (!isCreated) {
         logger.log("ERROR", "lock file error.");
         throw std::runtime_error("Daemon: lock file error");
@@ -118,12 +117,19 @@ void Daemon::daemonize() {
  * @return false If the file already exists or cannot be created.
  */
 bool Daemon::createLockFile() {
-    lockFd = open("/var/lock/matt_daemon.lock", O_CREAT | O_EXCL | O_WRONLY, 0644);
-
+    lockFd = open("/var/lock/matt_daemon.lock", O_CREAT | O_RDWR, 0644);
     if (lockFd < 0) {
-        logger.log("ERROR", "Can not create lock file.");
+        logger.log("ERROR", "Cannot open lock file.");
         return false;
     }
+
+    if (flock(lockFd, LOCK_EX | LOCK_NB) < 0) {
+        logger.log("ERROR", "Another instance is already running");
+        close(lockFd);
+        lockFd = -1;
+        return false;
+    }
+
     return true;
 }
 
@@ -133,8 +139,9 @@ bool Daemon::createLockFile() {
  * This function is called during shutdown and in the signal handler
  * to ensure proper cleanup.
  */
- void Daemon::removeLockFile() {
+void Daemon::removeLockFile() {
     if (lockFd >= 0) {
+        flock(lockFd, LOCK_UN);
         close(lockFd);
         lockFd = -1;
     }
@@ -146,6 +153,8 @@ bool Daemon::createLockFile() {
     }
 }
 
+
+
 /**
  * @brief Sets up signal handlers for clean shutdown.
  * 
@@ -154,12 +163,14 @@ bool Daemon::createLockFile() {
  */
 void Daemon::setupSignalHandlers() {
     instance = this;
-    struct sigaction signal;
-    signal.sa_handler = Daemon::handleSignal;
-    sigemptyset(&signal.sa_mask);
-    signal.sa_flags = 0;
-    sigaction(SIGINT, &signal, nullptr);
-    sigaction(SIGTERM, &signal, nullptr);
+    // struct sigaction signal;
+    // signal.sa_handler = Daemon::handleSignal;
+    // sigemptyset(&signal.sa_mask);
+    // signal.sa_flags = 0;
+    // sigaction(SIGINT, &signal, nullptr);
+    // sigaction(SIGTERM, &signal, nullptr);
+    signal(SIGINT, Daemon::handleSignal);
+    signal(SIGTERM, Daemon::handleSignal);
 }
 
 /**
