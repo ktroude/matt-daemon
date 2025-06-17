@@ -1,4 +1,4 @@
-#include "../include/Server.hpp"
+#include "../include/Daemon.hpp"
 #include <string.h>
 #include <unistd.h>
 #include <algorithm>
@@ -8,6 +8,9 @@ Server::Server(int port, TintinReporter &logger): logger(logger), running(true),
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
         logger.log("ERROR", "Server: socket creation failed.");
+        if (Daemon::instance) {
+            Daemon::instance->removeLockFile();
+        }
         throw std::runtime_error("Server: socket creation failed");
     }
 
@@ -21,11 +24,17 @@ Server::Server(int port, TintinReporter &logger): logger(logger), running(true),
 
     if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
         logger.log("ERROR", "Server: bind failed.");
+        if (Daemon::instance) {
+            Daemon::instance->removeLockFile();
+        }
         throw std::runtime_error("Server: bind failed");
     }
 
     if (listen(serverSocket, 3) < 0) {
         logger.log("ERROR", "Server: listen failed, maximum socket reached.");
+        if (Daemon::instance) {
+            Daemon::instance->removeLockFile();
+        }
         throw std::runtime_error("Server: listen failed, maximum socket reached");
     }
 

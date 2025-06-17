@@ -110,7 +110,7 @@ void Daemon::daemonize() {
 /**
  * @brief Creates a lock file to ensure only one daemon instance is running.
  * 
- * Attempts to create /var/lock/matt_daemon.lock using O_EXCL. 
+ * Attempts to create /var/lock/matt_daemon.lock. 
  * If the file already exists, it means another daemon is running.
  * 
  * @return true If the lock file was successfully created.
