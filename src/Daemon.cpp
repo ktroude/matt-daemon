@@ -162,15 +162,18 @@ void Daemon::removeLockFile() {
  * These handlers stop the server and remove the lock file gracefully.
  */
 void Daemon::setupSignalHandlers() {
-    instance = this;
-    // struct sigaction signal;
-    // signal.sa_handler = Daemon::handleSignal;
-    // sigemptyset(&signal.sa_mask);
-    // signal.sa_flags = 0;
-    // sigaction(SIGINT, &signal, nullptr);
-    // sigaction(SIGTERM, &signal, nullptr);
-    signal(SIGINT, Daemon::handleSignal);
-    signal(SIGTERM, Daemon::handleSignal);
+
+    int signalsToHandle[] = {
+        SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGTRAP, SIGABRT, SIGBUS,
+        SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2, SIGPIPE, SIGALRM,
+        SIGTERM, SIGSTKFLT, SIGCHLD, SIGCONT, SIGTSTP, SIGTTIN,
+        SIGTTOU, SIGURG, SIGXCPU, SIGXFSZ, SIGVTALRM, SIGPROF,
+        SIGWINCH, SIGPOLL, SIGPWR, SIGSYS
+    };
+
+    for (int sig : signalsToHandle) {
+        signal(sig, Daemon::handleSignal);
+    }
 }
 
 /**
@@ -184,7 +187,8 @@ void Daemon::setupSignalHandlers() {
  */
 void Daemon::handleSignal(int signal) {
     if (instance) {
-        instance->logger.log("INFO", "Signal received: " + std::to_string(signal));
+        std::string signalName = strsignal(signal);
+        instance->logger.log("INFO", "Signal received: " + signalName + " (" + std::to_string(signal) + ")");
         instance->server->stop();
     }
 }
